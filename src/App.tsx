@@ -76,13 +76,15 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 // ─── XP-style button ──────────────────────────────────────────────────────────
 
-function XpButton({ children, onClick, primary = false }: { children: React.ReactNode; onClick?: () => void; primary?: boolean }) {
+function XpButton({ children, onClick, primary = false, type = "button", disabled = false }: { children: React.ReactNode; onClick?: () => void; primary?: boolean; type?: "button" | "submit"; disabled?: boolean }) {
   const [hover, setHover] = useState(false);
   const [active, setActive] = useState(false);
 
   return (
     <button
+      type={type}
       onClick={onClick}
+      disabled={disabled}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => { setHover(false); setActive(false); }}
       onMouseDown={() => setActive(true)}
@@ -354,16 +356,59 @@ function SkillsTab() {
   );
 }
 
-function ContactTab() {
-  const [sent, setSent] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+const WEB3FORMS_ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
 
-  const handleSubmit = (e?: React.FormEvent) => {
+const emptyForm = { name: "", email: "", subject: "", message: "", botcheck: "" };
+
+function ContactTab() {
+  const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [form, setForm] = useState(emptyForm);
+
+  const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    setSent(true);
+    if (status === "sending") return;
+
+    // Honeypot: real users never fill this hidden field.
+    if (form.botcheck) return;
+
+    if (!WEB3FORMS_ACCESS_KEY) {
+      setStatus("error");
+      setErrorMsg("The contact form isn't configured yet (missing access key).");
+      return;
+    }
+
+    setStatus("sending");
+    setErrorMsg("");
+
+    try {
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_ACCESS_KEY,
+          name: form.name,
+          email: form.email,
+          subject: form.subject || `New message from ${form.name || "your site"}`,
+          message: form.message,
+          from_name: "Personal Site Contact Form",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStatus("success");
+        setForm(emptyForm);
+      } else {
+        setStatus("error");
+        setErrorMsg(data.message || "Something went wrong. Please try again.");
+      }
+    } catch {
+      setStatus("error");
+      setErrorMsg("Network error — please try again, or email me directly.");
+    }
   };
 
-  if (sent) {
+  if (status === "success") {
     return (
       <div style={{ textAlign: "center", padding: "30px 20px" }}>
         <div style={{ fontSize: 40, marginBottom: 10 }}>✉️</div>
@@ -373,10 +418,12 @@ function ContactTab() {
         <p style={{ fontSize: 11, color: "#555" }}>
           Thanks for getting in touch. I&apos;ll reply within 24 hours.
         </p>
-        <XpButton onClick={() => setSent(false)}>Send Another</XpButton>
+        <XpButton onClick={() => setStatus("idle")}>Send Another</XpButton>
       </div>
     );
   }
+
+  const sending = status === "sending";
 
   const fieldStyle: React.CSSProperties = {
     width: "100%",
@@ -424,9 +471,28 @@ function ContactTab() {
               </tr>
             </tbody>
           </table>
+
+          {/* Honeypot — hidden from real users; bots that fill it are rejected. */}
+          <input
+            type="text"
+            name="botcheck"
+            value={form.botcheck}
+            onChange={(e) => setForm({ ...form, botcheck: e.target.value })}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            style={{ position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 }}
+          />
+
+          {status === "error" && (
+            <div style={{ background: "#fde8e8", border: "1px solid #d04040", color: "#a02020", padding: "6px 10px", marginTop: 6, fontSize: 11 }}>
+              ⚠ {errorMsg}
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-            <XpButton onClick={handleSubmit}>Send Message</XpButton>
-            <XpButton onClick={() => setForm({ name: "", email: "", subject: "", message: "" })}>Clear Form</XpButton>
+            <XpButton type="submit" disabled={sending}>{sending ? "Sending…" : "Send Message"}</XpButton>
+            <XpButton onClick={() => { setForm(emptyForm); setStatus("idle"); setErrorMsg(""); }} disabled={sending}>Clear Form</XpButton>
           </div>
         </form>
       </div>

@@ -358,8 +358,8 @@ function ContactTab() {
   const [sent, setSent] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     setSent(true);
   };
 

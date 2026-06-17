@@ -110,7 +110,7 @@ export const home = {
 
   // The scrolling ticker at the bottom of the Home tab
   ticker:
-    "🌟 Open to internships & research  |  📧 wenda.huang2006@gmail.com  |  💼 Statistics & Machine Learning @ CMU  |  ✨ Thanks for visiting!",
+    "🌟 Open to internships & research  |  💼 Statistics & Machine Learning @ CMU  |  ✉️ Reach me via the Contact tab  |  ✨ Thanks for visiting!",
 };
 
 // ─── ABOUT tab ──────────────────────────────────────────────────────────────
@@ -128,7 +128,7 @@ export const about = {
     { label: "Name", value: "Wenda Huang" },
     { label: "School", value: "Carnegie Mellon University" },
     { label: "Major", value: "Statistics & Machine Learning" },
-    { label: "Email", value: "wenda.huang2006@gmail.com" },
+    { label: "Contact", value: "See the Contact tab" },
     { label: "Location", value: "Pittsburgh, PA and Sugar Land, TX" },
     { label: "Interests", value: "ML, statistics, software" },
   ] as LabelValue[],
@@ -192,7 +192,7 @@ export const skills = {
 
 export const contact = {
   info: [
-    { icon: "📧", label: "Email", value: "wenda.huang2006@gmail.com" },
+    { icon: "📧", label: "Email", value: "Use the form →" },
     { icon: "📍", label: "Location", value: "Pittsburgh, PA" },
     { icon: "🎓", label: "School", value: "Carnegie Mellon University" },
     { icon: "🔗", label: "GitHub", value: "github.com/wenda-huang" },
